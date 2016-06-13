@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.format.Time;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -52,6 +53,7 @@ public class SettingsActivity extends AppCompatActivity implements TimePickerFra
             public void onClick(View v) {
                 Intent i = new Intent();
                 i.putExtra(MainActivity.SYNC, true);
+                i.putExtra(MainActivity.SKILL, mSkill);
                 SettingsActivity.this.setResult(Activity.RESULT_OK, i);
                 SettingsActivity.this.finish();
             }
@@ -84,12 +86,26 @@ public class SettingsActivity extends AppCompatActivity implements TimePickerFra
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_settings, menu);
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
 //                if (null != NavUtils.getParentActivityName(this)) {
 //                    NavUtils.navigateUpFromSameTask(this);
 //                }
+//                Intent i = new Intent();
+//                i.putExtra(EXTRA_HOUR, mHour);
+//                i.putExtra(ETRA_MINUTE, mMinute);
+//                i.putExtra(MainActivity.SKILL, mSkill);
+//                SettingsActivity.this.setResult(Activity.RESULT_OK, i);
+//                SettingsActivity.this.finish();
+//                return true;
+            case R.id.action_approve:
                 Intent i = new Intent();
                 i.putExtra(EXTRA_HOUR, mHour);
                 i.putExtra(ETRA_MINUTE, mMinute);

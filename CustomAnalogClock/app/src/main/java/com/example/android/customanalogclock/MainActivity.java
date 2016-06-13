@@ -79,17 +79,19 @@ public class MainActivity extends AppCompatActivity {
         if (resultCode != Activity.RESULT_OK) return;
 
         if (requestCode == REQUEST_SETTING) {
+            mSkill = data.getIntExtra(SKILL, R.drawable.clock_dial);
+            
             if (!data.hasExtra(SYNC)) {
                 Time Calendar = new Time();
                 Calendar.setToNow();
                 float hour = data.getFloatExtra(SettingsActivity.EXTRA_HOUR, Calendar.hour);
                 float minute = data.getFloatExtra(SettingsActivity.ETRA_MINUTE, Calendar.minute);
-                mSkill = data.getIntExtra(SKILL, R.drawable.clock_dial);
                 mAnalogClock.setTime(hour, minute);
                 mAnalogClock.setSkill(mSkill);
                 mAnalogClock.invalidate();
             } else {
                 mAnalogClock.setSync(true);
+                mAnalogClock.setSkill(mSkill);
             }
         }
     }

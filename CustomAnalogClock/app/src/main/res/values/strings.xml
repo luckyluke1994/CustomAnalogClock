@@ -8,4 +8,5 @@
     <string name="sync_time">Sync Time</string>
     <string name="skill">Skill</string>
     <string name="title_activity_choose_skill">ChooseSkillActivity</string>
+    <string name="approve">Approve</string>
 </resources>
