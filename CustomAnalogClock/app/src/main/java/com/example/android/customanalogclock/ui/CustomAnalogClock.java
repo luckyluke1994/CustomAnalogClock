@@ -13,6 +13,7 @@ import android.text.format.Time;
 import android.util.AttributeSet;
 import android.view.View;
 
+import com.example.android.customanalogclock.MainActivity;
 import com.example.android.customanalogclock.R;
 
 import java.util.TimeZone;
@@ -35,6 +36,7 @@ public class CustomAnalogClock extends View {
     private Context mContext;
 
     private boolean mAttached;
+    private boolean isSync;
 
     private final Handler mHandler = new Handler();
     private float mMinutes;
@@ -43,6 +45,9 @@ public class CustomAnalogClock extends View {
     private boolean mChanged;
     boolean mSeconds=false;
     MyCount counter = new MyCount(10000, 1000);
+
+    private int mSkill = R.drawable.clock_dial;
+    private Resources r;
 
     public CustomAnalogClock(Context context) {
         super(context);
@@ -55,24 +60,19 @@ public class CustomAnalogClock extends View {
     public CustomAnalogClock(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        Resources r = context.getResources();
+        r = context.getResources();
         mContext = context;
 
-        mDial = r.getDrawable(R.drawable.clock_dial);
+        loadSkill();
+
         mHourHand = r.getDrawable(R.drawable.clock_hour);
         mMinuteHand = r.getDrawable(R.drawable.clock_minute);
         mSecondHand = r.getDrawable(R.drawable.clockgoog_minute);
 
         mCalendar = new Time();
 
-        mDialWidth = mDial.getIntrinsicWidth();
-        mDialHeight = mDial.getIntrinsicHeight();
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
+        isSync = context.getSharedPreferences(MainActivity.AnalogClockPref, Context.MODE_PRIVATE)
+                .getBoolean(MainActivity.SYNC, true);
 
         if (!mAttached) {
             mAttached = true;
@@ -90,6 +90,29 @@ public class CustomAnalogClock extends View {
         // Make sure we update to the current time
         onTimeChanged();
         counter.start();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
+//        if (!mAttached) {
+//            mAttached = true;
+//            IntentFilter filter = new IntentFilter();
+//
+//            filter.addAction(Intent.ACTION_TIME_TICK);
+//            filter.addAction(Intent.ACTION_TIME_CHANGED);
+//            filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
+//
+//            getContext().registerReceiver(mIntentReceiver, filter, null, mHandler);
+//        }
+//
+//        mCalendar = new Time();
+//
+//        // Make sure we update to the current time
+//        onTimeChanged();
+//        counter.start();
     }
 
     @Override
@@ -163,7 +186,8 @@ public class CustomAnalogClock extends View {
         dial.draw(canvas);
 
         canvas.save();
-        canvas.rotate(mHour / 12.0f * 360.0f, x, y);
+        float hourDegree = (mHour / 12.0f * 360.0f) + ((mMinutes + (mSecond / 60.0f)) / 60.0f * 30.0f);
+        canvas.rotate(hourDegree, x, y);
         final Drawable hourHand = mHourHand;
         if (changed) {
             w = hourHand.getIntrinsicWidth();
@@ -174,7 +198,8 @@ public class CustomAnalogClock extends View {
         canvas.restore();
 
         canvas.save();
-        canvas.rotate(mMinutes / 60.0f * 360.0f, x, y);
+        float minuteDegree = (mMinutes / 60.0f * 360.0f) + (mSecond / 60.0f * 6.0f);
+        canvas.rotate(minuteDegree, x, y);
         final Drawable minuteHand = mMinuteHand;
         if (changed) {
             w = minuteHand.getIntrinsicWidth();
@@ -185,7 +210,7 @@ public class CustomAnalogClock extends View {
         canvas.restore();
 
         canvas.save();
-        canvas.rotate(mSecond, x, y);
+        canvas.rotate(mSecond * 6.0f, x, y);
 
         if (seconds) {
             w = mSecondHand.getIntrinsicWidth();
@@ -200,15 +225,59 @@ public class CustomAnalogClock extends View {
     }
 
     private void onTimeChanged() {
-        mCalendar.setToNow();
+        if (isSync) {
+            mCalendar.setToNow();
 
-        int hour = mCalendar.hour;
-        int minute = mCalendar.minute;
-        int second = mCalendar.second;
+            int hour = mCalendar.hour;
+            int minute = mCalendar.minute;
+            int second = mCalendar.second;
 
-        mMinutes = minute + second / 60.0f;
-        mHour = hour + mMinutes / 60.0f;
+            mMinutes = minute;
+            mHour = hour;
+            mSecond = second;
+            mChanged = true;
+        }
+    }
+
+    public float getHour() {
+        return mHour;
+    }
+
+    public float getMinute() {
+        return mMinutes;
+    }
+
+    public void setSync(boolean sync) {
+        isSync = sync;
+        onTimeChanged();
+        CustomAnalogClock.this.invalidate();
+    }
+
+    public void setTime(float hour, float minute) {
+        mHour = hour;
+        mMinutes = minute;
+        isSync = false;
+        CustomAnalogClock.this.invalidate();
+    }
+
+    public void setSkill(int skill) {
+        mSkill = skill;
         mChanged = true;
+        loadSkill();
+        mDial.invalidateSelf();
+        this.invalidate();
+    }
+
+    public int getSkill() {
+        return mSkill;
+    }
+
+    @SuppressWarnings("deprecation")
+    public void loadSkill() {
+        mDial = r.getDrawable(mSkill);
+
+        mDialWidth = mDial.getIntrinsicWidth();
+        mDialHeight = mDial.getIntrinsicHeight();
     }
 
     public class MyCount extends CountDownTimer {
@@ -224,7 +293,17 @@ public class CustomAnalogClock extends View {
             int minute = mCalendar.minute;
             int second = mCalendar.second;
 
-            mSecond = 6.0f * second;
+            mSecond = second;
+            if (mSecond == 0) {
+                mMinutes++;
+                if (mMinutes > 59) {
+                    mMinutes -= 60;
+                    mHour++;
+                    if (mHour > 11) {
+                        mHour -= 12;
+                    }
+                }
+            }
             mSeconds = true;
 
             CustomAnalogClock.this.invalidate();
@@ -245,6 +324,7 @@ public class CustomAnalogClock extends View {
                 mCalendar = new Time(TimeZone.getTimeZone(tz).getID());
             }
 
+            isSync = true;
             onTimeChanged();
 
             invalidate();
