@@ -15,6 +15,7 @@ import android.view.View;
 
 import com.example.android.customanalogclock.MainActivity;
 import com.example.android.customanalogclock.R;
+import com.example.android.customanalogclock.service.RingtonePlayingService;
 
 import java.util.TimeZone;
 
@@ -22,6 +23,8 @@ import java.util.TimeZone;
  * Created by lucky_luke on 6/7/2016.
  */
 public class CustomAnalogClock extends View {
+    public static final String RINGTONE_RECEIVER = "complete";
+    public static final String RINGTONE_STATUS = "status";
     @SuppressWarnings("deprecation")
     private Time mCalendar;
 
@@ -49,6 +52,11 @@ public class CustomAnalogClock extends View {
     private int mSkill = R.drawable.clock_dial;
     private Resources r;
 
+    boolean isAlarm;
+    float hourAlarm;
+    float minuteAlarm;
+    boolean isStartService;
+
     public CustomAnalogClock(Context context) {
         super(context);
     }
@@ -59,6 +67,9 @@ public class CustomAnalogClock extends View {
     @SuppressWarnings("deprecation")
     public CustomAnalogClock(Context context, AttributeSet attrs) {
         super(context, attrs);
+
+        isAlarm = false;
+        isStartService = false;
 
         r = context.getResources();
         mContext = context;
@@ -84,6 +95,10 @@ public class CustomAnalogClock extends View {
 
             getContext().registerReceiver(mIntentReceiver, filter, null, mHandler);
         }
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(RINGTONE_RECEIVER);
+        getContext().registerReceiver(mRingtoneReceiver, intentFilter);
 
         mCalendar = new Time();
 
@@ -260,6 +275,24 @@ public class CustomAnalogClock extends View {
         CustomAnalogClock.this.invalidate();
     }
 
+    public void setAlarm(boolean isOn, float hour, float minute) {
+        isAlarm = isOn;
+        hourAlarm = hour;
+        minuteAlarm = minute;
+    }
+
+    public boolean getAlarm() {
+        return isAlarm;
+    }
+
+    public float getHourAlarm() {
+        return hourAlarm;
+    }
+
+    public float getMinuteAlarm() {
+        return minuteAlarm;
+    }
+
     public void setSkill(int skill) {
         mSkill = skill;
         mChanged = true;
@@ -289,6 +322,19 @@ public class CustomAnalogClock extends View {
         public void onTick(long millisUntilFinished) {
             mCalendar.setToNow();
 
+            if (isAlarm) {
+                if (hourAlarm == mHour) {
+                    if (minuteAlarm == mMinutes) {
+                        if (!isStartService) {
+                            isStartService = true;
+                            Intent serviceIntent = new Intent(mContext, RingtonePlayingService.class);
+                            serviceIntent.putExtra(RINGTONE_STATUS, "play");
+                            mContext.startService(serviceIntent);
+                        }
+                    }
+                }
+            }
+
             int hour = mCalendar.hour;
             int minute = mCalendar.minute;
             int second = mCalendar.second;
@@ -299,8 +345,8 @@ public class CustomAnalogClock extends View {
                 if (mMinutes > 59) {
                     mMinutes -= 60;
                     mHour++;
-                    if (mHour > 11) {
-                        mHour -= 12;
+                    if (mHour > 23) {
+                        mHour -= 24;
                     }
                 }
             }
@@ -328,6 +374,15 @@ public class CustomAnalogClock extends View {
             onTimeChanged();
 
             invalidate();
+        }
+    };
+
+    private final BroadcastReceiver mRingtoneReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(RINGTONE_RECEIVER)) {
+                isStartService = false;
+            }
         }
     };
 }

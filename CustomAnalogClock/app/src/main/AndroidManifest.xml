@@ -30,6 +30,20 @@
             android:name=".ChooseSkillActivity"
             android:label="@string/title_activity_choose_skill" >
         </activity>
+
+        <service
+            android:name=".service.RingtonePlayingService"
+            android:enabled="true" >
+        </service>
+
+        <activity
+            android:name=".AlarmActivity"
+            android:label="@string/title_activity_alarm"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity"/>
+        </activity>
     </application>
 
 </manifest>

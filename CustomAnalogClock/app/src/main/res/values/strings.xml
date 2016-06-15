@@ -9,4 +9,7 @@
     <string name="skill">Skill</string>
     <string name="title_activity_choose_skill">ChooseSkillActivity</string>
     <string name="approve">Approve</string>
+    <string name="title_activity_alarm">AlarmActivity</string>
+    <string name="set_alarm">Set Alarm</string>
+    <string name="unset_alarm">Unset Alarm</string>
 </resources>
